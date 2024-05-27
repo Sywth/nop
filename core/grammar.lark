@@ -1,0 +1,35 @@
+// Grammar for nop language
+
+?start: line*
+
+function_head: "(" [identifier ("," identifier)*] ")"
+function_body : "{" line* [return_statement] "}"
+function : function_head function_body
+function_call : identifier "(" [argument ("," argument)*] ")"
+
+?line : command
+?argument : expression | command
+?expression : value | identifier
+?command: assignment | function_call 
+
+assignment : identifier "<-" argument
+return_statement : "return" argument
+
+?value: function
+      | numeric 
+      | array
+      | ESCAPED_STRING     -> string
+      | "true"             -> true
+      | "false"            -> false
+      | "null"             -> null
+
+numeric : SIGNED_NUMBER
+array   : "[" [value ("," value)*] "]"
+identifier: /[_a-zA-Z\'\+\-\*\/]+[_a-zA-Z\'\+\-\*\/0-9]*/
+
+%import common.ESCAPED_STRING
+%import common.SIGNED_NUMBER
+%import common.WS
+%import common.NEWLINE
+
+%ignore WS
