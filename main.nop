@@ -1,14 +1,17 @@
-* <- (a,b) { 
-    return sum(range(a,(){return b}))
-}  
+factorial <- (x) {
+    return if (
+        <(x,2), 
+        (){
+            return 1
+        }, 
+        (){
+            return *(
+                x,
+                self(-(x,1))
+            )
+        }
+    )
+}
 
-if(cond, () {
-    return x
-})
 
-square <- (x) {return *(x,x)}
-prompt <- "Enter first number"    
-x1 <- input()
-x2 <- input()
-a <- b <- c <- d <- 100
-print(square(+(x1, x2)))
+factorial <- (x) {return if (<(x,2), (){return 1}, (){return *(x,self(-(x,1)))})}

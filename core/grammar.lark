@@ -25,7 +25,7 @@ return_statement : "return" argument
 
 numeric : SIGNED_NUMBER
 array   : "[" [value ("," value)*] "]"
-identifier: /[_a-zA-Z\'\+\-\*\/]+[_a-zA-Z\'\+\-\*\/0-9]*/
+identifier: /[_a-zA-Z\'\>\<\=\+\-\*\/]+[_a-zA-Z\'\>\<\=\+\-\*\/0-9]*/
 
 %import common.ESCAPED_STRING
 %import common.SIGNED_NUMBER
@@ -33,3 +33,4 @@ identifier: /[_a-zA-Z\'\+\-\*\/]+[_a-zA-Z\'\+\-\*\/0-9]*/
 %import common.NEWLINE
 
 %ignore WS
+%ignore NEWLINE

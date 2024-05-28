@@ -9,12 +9,10 @@ from core.language import (
     LambdaFunction,
     FunctionCall,
     IdentifierType,
+    LineType,
     Null,
     ReturnStatement,
 )
-
-# TODO next time, implement if statements using functions with 3 arguments
-# TODO next time, implement loops etc
 
 
 class NopTransformer(lark.Transformer):
@@ -43,13 +41,32 @@ class NopTransformer(lark.Transformer):
         return Null
 
     def function(self, items: list[lark.tree.Tree]):
-        parameters = items[0].children
-        if len(parameters) == 1 and parameters[0] is None:
-            parameters = []
-        lines = items[1].children
-        if len(lines) == 1 and lines[0] is None:
-            lines = []
-        f = LambdaFunction(parameters, lines)
+        parameters = [item for item in items[0].children if item is not None]
+        lines: list[LineType] = [item for item in items[1].children if item is not None]
+
+        scope = set(
+            str(parameter) for parameter in parameters
+        )  # variables that are closed by the above scopes
+        open_variables = set()  # variables that must be meet by the above scopes
+        for line in lines:
+            line = line.rhs if isinstance(line, ReturnStatement) else line
+            if isinstance(line, IdentifierType) and (line := str(line)) not in scope:
+                open_variables.add(line)
+            elif isinstance(line, Assignment):  # a <- b # a is closed, b is open
+                scope.add(line.identifier)
+                open_variables.discard(line.identifier)
+            elif isinstance(line, FunctionCall):  # a(b) # b and a are open
+                for argument in line.arguments:
+                    if isinstance(argument, IdentifierType) and argument not in scope:
+                        open_variables.add(argument)
+
+                if (
+                    isinstance(line.identifier, IdentifierType)
+                    and line.identifier not in scope
+                ):
+                    open_variables.add(line.identifier)
+
+        f = LambdaFunction(parameters, lines, open_variables)
         return f
 
     def function_call(self, items: list[lark.tree.Tree]):
@@ -84,6 +101,7 @@ def inject_library(state: dict, library: dict) -> None:
 def get_runner(parser: lark.Lark, transformer: lark.Transformer, global_sate):
     inject_library(global_sate, constants.math)
     inject_library(global_sate, constants.io)
+    inject_library(global_sate, constants.logic)
 
     def run(line: str):
         try:
@@ -113,7 +131,7 @@ def get_runner(parser: lark.Lark, transformer: lark.Transformer, global_sate):
 def run_repl():
     run = get_runner(parser=get_parser(), transformer=get_transformer(), global_sate={})
     while True:
-        line = input(">>>")
+        line = input(">\t")
         run(line)
 
 
